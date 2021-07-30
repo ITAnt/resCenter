@@ -1,0 +1,89 @@
+
+WebRTC 分析
+	
+Android:
+	Android Audio
+		AudioDevice
+			SPEAKER_PHONE
+			WIRE_HEADSET
+			EARPIECE			听筒
+			BLUETOOTH
+			NONE
+	AudioMananger
+	Audio Focus
+	
+	Proximity Sensor	//靠近传感器		Sensor.TYPE_PROXIMITY
+	耳机广播
+	扬声器开关
+	蓝牙耳机
+
+AppRTCClient	: interface
+	RoomConnectionParameters		:class
+		roomUrl
+    roomId
+    loopback
+    urlParameters
+	connectToRoom()
+ 	sendOfferSdp()
+  sendAnswerSdp()
+  sendLocalIceCandidate()
+  sendLocalIceCandidateRemovals()
+	disconnectFromRoom()
+
+	SignalingParameters		:		class
+		iceServers;
+    initiator;
+    String clientId;
+    wssUrl;
+    wssPostUrl;
+    offerSdp;
+    iceCandidates;
+
+	SignalingEvents		: interface
+		onConnectedToRoom()
+		onRemoteDescription()
+		onRemoteIceCandidate()
+		onRemoteIceCandidatesRemoved()
+		onChannelClose()
+		onChannelError()
+
+
+设置项：
+	视频设置
+		录屏
+		使用 camera2
+		分辨率
+		fps
+		录制质量
+		最大码率
+		编码
+		是否使用硬编码
+		surface texture
+		是否使用固定fec
+
+	音频设置
+		码率
+		编码
+		音频处理
+			aecdump
+			录制保存文件
+			opensl es 播放
+			硬件 AEC
+			硬件 AGC
+			硬件 NS
+			WebRTC AGC 和 HPF
+
+	数据通道
+
+
+	其他设置：
+		房间服务 url
+		显示 call 统计
+
+
+
+
+未知技术：
+	HPF				高通滤波器
+
+		

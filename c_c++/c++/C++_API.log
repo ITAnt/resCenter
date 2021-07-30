@@ -1,0 +1,139 @@
+C++ API
+
+基础知识
+	const_cast
+	reinterpret_cast		//把一种数据类型改变成另一种，应当被用在两种不可调和的指针类型之间
+	static_cast				//在两个不同类型之间进行强制转换，并且没有运行时间检查
+	dynamic_cast			//强制将一个类型转化为另外一种类型，并且在执行运行时检查它保证它的合法性。如果想在两个互相矛盾的类型之间转化时，它的返回值将为 NULL
+
+	sizeof(int);
+	sizeof x;			//int x;则 sizeof x 为 sizeof(int)
+
+	namespace Bob = BobsSuperDuperLibrary;		//别名
+
+面向对象
+struct S {
+  int a;
+  void f();
+};
+
+
+void S::f(){
+	::f();
+	::a++;
+	a--;
+}
+
+class xxx{
+	static int i,j;		//类变量可以在常函数中修改
+};
+
+void Comm::isr() volatile {}
+
+class Apple{
+public:
+	operator Orange() const;		//强转 Orange 为 Apple
+};
+//调用
+Orange(Apple);
+
+void* operator new(size_t sz) {}		//重载 new 运算符
+//调用
+Widget* w = new Widget;
+void operator delete[](void* p) {}	//重载 delete 运算符
+delete []wa;		//调用
+
+对于虚函数，如果子类未实现，则子类调用时，可调用，但没有任何执行(父类虚函数不会执行)
+
+子类析构，父类析构为纯虚函数
+	子类先析构，父类再析构
+
+含有虚函数的类，虚表结构为 8字节
+
+string
+初始化
+	string s1,s2;
+	string s3 = "Hello, World.";
+  string s4("I am");
+	
+	c_str()
+
+
+泛型
+类模板
+函数模板
+
+template<typename T>
+T const& func(T const &v) {return v;}
+
+export template<typename T>
+T square(T const &v);
+
+typedef int (some_value::* some_value_mfp)(int);
+
+
+template<some_value_mfp func> //func是一个成员函数指针型模板参数
+int call(some_value &value, int op) {return (value.*func)(op);}
+
+//Func是一个模板型模板函数，包装foreach要对每个元素进行的操作
+template<template<typename TT>  struct Func, typename T>
+void foreach(T array[], unsigned size)
+{
+    Func<T> func;
+    for (unsigned i = 0; i < size; ++i) func(array[i]);
+}
+
+//模板通例，有三个模板参数，分别是类型参数，非类型参数及模板型参数
+template<typename T, int i, template<typename, int> class SP>
+struct S;
+
+
+STL
+	
+容器
+	vector
+		vector<string> v;
+		v.push_back(line)
+		v.size()
+		v[i]		//访问索引为 i 的元素
+	set:
+		std::set<string> sets;
+		sets.insert(str);
+		sets.erase(str);
+		sets.size();
+
+
+
+流
+格式化输出
+	cout << oct << number << endl;
+	cout<<atoi(argv[i])<<endl;
+
+文件：
+	ifstream in(filename);
+	getline(in,str);
+	in>>str		//读取一行并赋值
+
+	ifstream in;
+	in.open(filename)
+
+
+异常处理
+抛出异常
+
+void* Framis::operator new(size_t) throw(bad_alloc){
+	throw bad_alloc;
+}
+
+try{
+	new Framis;
+}catch(bad_alloc){
+	cerr<<""<<endl;	//throw;   重新抛出
+}
+
+set_new_handler();		//new handler
+
+throw (std::runtime_error) {
+	...
+	throw std::runtime_error("Out of memory");
+}
