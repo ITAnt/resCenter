@@ -1,0 +1,198 @@
+常见知识点
+	restrict		//用于告诉编译器，对象已经被指针所引用，不能通过除该指针外所有其他直接或间接的方式修改该对象的内容。不能通过其它途径(其它变量或指针)来修改
+	_Noreturn		//表明调用完成后函数不返回主调函数。		//C11
+
+
+指针：
+	char **pcm;
+	char (*pcn)[5];
+	char *MeanLow[4]={"人数","平均成绩","最低分数科目的成绩","最低分数的科目"};
+	char name[5][5]={"数学","物理","外语","政治","体育"};
+	
+
+	
+宏：
+	编译时期替换
+	宏定义中 #p ---> "p"
+	__FILE__, __func__, __LINE__		%s	%s %d
+
+#pragma pack(push)
+#pragma pack(pop) 	
+
+
+数组：
+
+	size_t len = sizeof(arrayname)/sizeof(*arrayname)
+	
+
+函数：
+不定参数
+	va_list
+	va_start()
+	va_arg()
+	va_end()
+
+
+字符串操作：
+string:
+	strstr				//查找子串
+	strncpy				//复制指定长度的字符串
+	strlen()
+
+sprintf(buffer,"",)		//拼接字符串到buffer
+
+流：
+	setbuf()		//设置标准流的缓冲区
+	setvbuf()
+
+文件操作：
+file:
+	fopen(filename,"wb")		//可以检测文件是否可写
+	fread(buffer,size,n,fd)
+	fwrite(buffer,size,n,fd)
+	fclose(fd)
+
+	fseek(fd,size,SEEK_SET)	//SEEK_CUR、SEEK_END
+	ftell()		//返回流 stream 的文件位置指示器，文本模式打开，此函数返回的值未指定
+
+	fprintf(stderr,"")
+	fputs(buffer,fd)
+	fgets(buffer,fd)
+	feof()			//是否为文件流末尾
+	ferror()
+	clearerr(FILE *stream)	//重置错误标志的文件流
+
+	rewind(fd)		//回到文件开头
+
+异常：
+	strerror(errno)
+
+
+内存：
+	memmove()
+	memcpy()
+	memcmp()
+
+	malloc()
+	realloc()
+
+时间：
+clock:
+	clock_t t1 = clock();
+
+time:
+	struct timespec ts;
+	timespec_get(&ts,TIME_UTC);
+
+	time_t now;
+	time(&now);		//now 结构？？？
+
+
+线程：
+
+C语言中
+头文件 <threads.h>
+
+thread:
+	thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
+	thrd_equal()
+	thrd_current()
+	thrd_sleep()
+	thrd_yield()
+	thrd_exit()
+	thrd_detach()
+	thrd_join()
+
+mutex:
+	mtx_t
+	mtx_init()
+	mtx_lock()
+	mtx_timedlock()
+	mtx_trylock()
+	mtx_unlock()
+	mtx_destroy()
+
+cnd:
+	cnd_init()
+	cnd_signal()
+	cnd_broadcast()		//除阻所有当前的 cond 所指的条件变量上等待的线程
+	cnd_wait()
+	cnd_timedwait()
+	cnd_destroy()
+
+	
+thread_local			//线程内的副本变量，各持一份
+	//存储期是创建对象的线程的整个执行过程，在启动线程时初始化存储于对象的值。每个线程拥有其自身的相异对象。
+	//所有声明为 _Thread_local 的对象拥有此存储期。
+
+tss：	//线程特定存储关键
+	tss_create(tss_t* tss_key,tss_dtor_t destructor)	//创建新的线程特定存储关键
+		tss_key	-	指向要存储新的线程特定存储关键的内存位置的指针
+		destructor	-	指向要在线程退出时调用的函数的指针
+	tss_create()
+	tss_get()
+	tss_set()
+	tss_delete()
+
+
+Linux POSIX
+头文件 <pthread.h>
+	
+__thread 说明符
+	__thread int var;		//线程本地变量
+	
+thread:
+	pthread_create（）
+	pthread_join()
+	pthread_self()
+	pthread_equal()
+	pthread_detach()
+	pthread_
+
+
+mutex:
+
+
+cnd:
+
+
+
+线程特有数据
+	创建一个 key，用以将不同的线程特有数据区分开来；不同的线程使用相同的key 保存不同的 value
+	pthread_key_create()		//创建一个key，只需要在首个调用该函数的线程中创建一次
+	pthread_setspecific()
+	pthread_getspecific()
+
+
+
+标准函数库：
+
+abort()	//中止程序执行，产生异常程序终止,直接从调用的地方跳出,进程终止时不会销毁任何对象
+abort_handler_s		//写入必须包含 msg 所指向字符串的实现定义消息到 stderr ，然后调用 abort() 。
+	//指向此函数的指针可以传递给 set_constraint_handler_s 以建立运行时制约违规处理
+	//同所有边界检查函数， abort_handler_s 仅若实现定义了 __STDC_LIB_EXT1__ ，且用户在包含 <stdlib.h> 前定义 __STDC_WANT_LIB_EXT1__ 为整数常量 1 才保证可用。
+assert()
+
+
+数据结构
+	Linux list.h 文件
+	INIT_LIST_HEAD()
+	list_add()
+	list_for_each()
+	list_entry()
+	list_empty()
+	list_empty_careful()
+	list_move()
+	list_move_tail()
+	list_del()
+	list_del_init()
+	list_splice()
+	list_for_each_safe()
+
+
+还需要补充的知识点：
+	Atomic    原子性操作
+	宽字符
+	
+	
+

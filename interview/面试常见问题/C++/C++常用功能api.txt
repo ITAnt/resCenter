@@ -1,0 +1,10 @@
+
+C++ 
+	string <--> char
+		char --> string
+			string str=ch;
+			string str(ch);
+		
+		string -->char
+			str.c_str();
+			

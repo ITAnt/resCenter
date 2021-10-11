@@ -1,0 +1,7 @@
+# AndroidManifest
+
+
+
+requestLegacyExternalStorage
+usesCleartextTraffic
+
