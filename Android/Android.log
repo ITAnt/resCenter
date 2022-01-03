@@ -1,0 +1,190 @@
+Android:
+    LifecycleObserver
+    LifecycleOwner
+    ConditionVariable
+    requestLegacyExternalStorage
+    usesCleartextTraffic
+
+    MediaMetadataRetriever
+        从输入媒体文件检索帧和元数据的统一接口
+
+    锁：
+        ConditionVariable
+            //主要看 mCondition 的值， false -->wait     true--->notifyAll()
+            ConditionVariable mCondition = new ConditionVariable(true);
+            mCondition.block();     // true ---> 不执行，false ---> wait()
+			mCondition.close();     // 设置为 false
+            //相关同步代码
+            mCondition.open();      //notifyAll()  并更新为 true
+
+        ReentrantLock(重入锁)
+            private Lock lock = new ReentrantLock();
+            lock.lock();
+            //相关同步区域代码
+            lock.unlock();
+        synchronized
+            可重入锁
+            不可中断锁
+            非公平锁
+            //同步代码块
+        阻塞队列(ArrayBlockingQueue、LinkedBlockingQueue)
+            put(E e) : 在队尾添加一个元素，如果队列满则阻塞
+            size() : 返回队列中的元素个数
+            take() : 移除并返回队头元素，如果队列空则阻塞
+    
+    Audio:
+            音频延迟比较大，平均要 150ms。后来Android添加了 FastMixer 和 AUDIO_OUT_PUT_FLAG_FAST 等，来解决这个问题。
+            判断设备是否支持 FastPath，需要用到这两个特性：
+                android.hardware.audio.low_latency  指示 45 毫秒或更短的持续输出延迟时间。
+                android.hardware.audio.pro          指示 20 毫秒或更短的持续往返延迟时间。
+
+            常见类型的延迟时间
+                音频输出时间延迟            音频样本由应用生成到通过耳机插孔或内置扬声器播放之间的时间。
+                音频输入延迟时间            音频信号由设备音频输入（如麦克风）接收到相同音频数据可被应用使用的时间。
+                往返延迟时间                输入延迟时间、应用处理时间和输出延迟时间的总和。
+                触摸延迟时间                用户触摸屏幕与触摸事件被应用接收之间的时间。
+                预热延迟时间                启动音频管道、数据第一次在缓冲区加入队列所需的时间。
+            
+            最大程度减少延迟时间的做法
+                验证音频性能
+                    了解设备是否能为延迟时间提供任何保证：
+                        android.hardware.audio.low_latency 指示 45 毫秒或更短的持续输出延迟时间
+                        android.hardware.audio.pro 指示 20 毫秒或更短的持续往返延迟时间
+
+                        boolean hasLowLatencyFeature = getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_LOW_LATENCY);
+                        boolean hasProFeature = getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_PRO);
+
+                        android.hardware.audio.low_latency 功能是 android.hardware.audio.pro 的先决条件。
+                
+                最大程度的减少输入延迟时间
+                    1. 移除任何不需要的信号处理
+                    2. 准备好处理由 PROPERTY_OUTPUT_SAMPLE_RATE 的 getProperty(String) 报告的名义采样率，常见 44100 和 48000
+                    3. 准备好处理由 PROPERTY_OUTPUT_FRAMES_PER_BUFFER 的 getProperty(String) 报告的缓冲区大小。常见有 96、128、160、192、240、256 或 512 帧
+                
+                最大程度减少输出延迟时间
+                    使用最佳采样率创建音频播放器
+                    从 AudioManager 获得最佳采样率
+                        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                        String sampleRateStr = am.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+                        int sampleRate = Integer.parseInt(sampleRateStr);
+                        if (sampleRate == 0) sampleRate = 44100; // Use a default value if property not found
+
+                    使用最佳缓冲区大小
+                    获得最佳缓冲区大小：
+                        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                        String framesPerBuffer = am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
+                        int framesPerBufferInt = Integer.parseInt(framesPerBuffer);
+                        if (framesPerBufferInt == 0) framesPerBufferInt = 256; // Use default   
+
+                        PROPERTY_OUTPUT_FRAMES_PER_BUFFER 属性表示 HAL（硬件抽象层）缓冲区可以容纳的音频帧数量。 您应构建音频缓冲区，使其可以容纳这个数量的确切倍数。 如果使用准确数量的音频帧，会定期出现回调，这将减少抖动。
+
+                避免添加涉及信号处理的输出接口
+                    快速混合器仅支持下列这些接口：
+                        SL_IID_ANDROIDSIMPLEBUFFERQUEUE
+                        SL_IID_VOLUME
+                        SL_IID_MUTESOLO
+                    不支持以下这些接口，因为它们涉及信号处理，且会导致快速音轨的请求被拒绝：
+                        SL_IID_BASSBOOST
+                        SL_IID_EFFECTSEND
+                        SL_IID_ENVIRONMENTALREVERB
+                        SL_IID_EQUALIZER
+                        SL_IID_PLAYBACKRATE
+                        SL_IID_PRESETREVERB
+                        SL_IID_VIRTUALIZER
+                        SL_IID_ANDROIDEFFECT
+                        SL_IID_ANDROIDEFFECTSEND
+                    
+                    const SLInterfaceID interface_ids[2] = { SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_VOLUME };
+                
+                    验证您正在使用低延迟时间音轨
+                        adb shell ps | grep your_app_name
+                        adb shell dumpsys media.audio_flinger
+                        扫描您的进程 ID。如果您在 Name 列看到 F，表示它在低延迟时间音轨上（F 代表快速音轨）
+                
+
+                最大程度减少预热延迟时间
+                    第一次将音频数据加入队列时，设备音频电路需要较短、但仍十分重要的一段时间来预热。 要避免这种预热延迟时间，您可以将包含无声的音频数据缓冲区加入队列
+                    #define CHANNELS 1
+                    static short* silenceBuffer;
+                    int numSamples = frames * CHANNELS;
+                    silenceBuffer = malloc(sizeof(*silenceBuffer) * numSamples);
+                    for (i = 0; i < numSamples; i++) {
+                        silenceBuffer[i] = 0;
+                    }
+
+                需要生成音频时，您可以将包含真实音频数据的缓冲区加入队列。
+                持续输出音频将消耗大量的电量。请确保您在 onPause() 方法中停止输出。另外，请考虑在用户无活动的一段时间后暂停无声输出。
+        
+
+    Gradle 优化： https://blog.csdn.net/tangzeyu7/article/details/106901616
+        https://blog.csdn.net/etwge/article/details/78417101
+
+
+        Media:
+            SEEK_TO_PREVIOUS_SYNC
+
+
+    Android Media:
+        MediaMetadataRetriever：文件解析
+
+
+        MediaExtractor：解封装
+            setDataSource(String path)
+            getTrackCount()
+            getTrackFormat(int index)
+
+            //执行读取数据
+            selectTrack(int index)      //选定音频或视频轨道
+            readSampleData(ByteBuffer byteBuf, int offset)      //读取数据
+            boolean advance();          //跳转到下一个数据
+            seekTo()
+                有三个可供选择的标记：
+                    SEEK_TO_PREVIOUS_SYNC       seek指定帧的上一帧
+                    SEEK_TO_CLOSEST_SYNC        seek指定帧的最近帧
+                    SEEK_TO_NEXT_SYNC           seek指定帧的下一帧
+                
+                准确获取指定时间的帧：
+                    1. 先定位到目标时间的上一帧，然后advance，直到读取的时间和目标时间的差值最小，或者读取的时间和目标时间的差值小于帧间隔。
+                    2. 使用MediaCodeC解码指定帧
+                        使用MediaExtractor的seekTo函数定位到目标采样点。然后 MediaCodeC 将 MediaExtractor 读取的数据压入输入队列，不断循环，直到拿到想要的目标帧的数据。
+
+
+            void release()
+            long getSampleTime()        //获取时间戳，微秒
+        
+
+        MediaMuxer：复用器
+
+        
+        MediaCodec：
+            手机设备配置文件：
+                system/etc/
+                vendor/etc/
+                    media_codecs.xml 等
+                    
+            异步
+            MediaCodec采用异步方式处理数据，并且使用了一组输入输出缓存（input and output buffers）来存放待处理数据以及处理完的数据。开发者只需将待编解码的数据放入输入缓冲区交给编解码器，再从输出缓冲区获取编解码后的数据即可。
+            其工作方式大致如下：
+                1、请求或接收一个空的输入缓存（input buffer）。
+                2、向其中填充待处理的数据，并将它传递给编解码器处理。
+                3、MediaCodec处理完这些数据并将处理结果输出至一个空的输出缓存（output buffer）中。
+                4、请求或接收到一个填充了处理后数据的输出缓存（output buffer）。
+                5、使用完其中的数据，并将其释放给编解码器再次使用。
+            MediaCodec主要的状态为：Stopped、Executing、Released。
+                Stopped 的状态下也分为三种子状态：Uninitialized、Configured、Error。
+                Executing 的状态下也分为三种子状态：Flushed、 Running、End-of-Stream。
+            
+                1. 当创建编解码器的时候处于未初始化状态。首先需要调用configure(…)方法进入Configured状态，然后调用start()方法让其处于Executing状态。在Executing状态下，就可以缓冲区来处理数据。
+                2、Executing的状态下也分为三种子状态：Flushed、 Running、End-of-Stream。在start() 调用后，编解码器处于Flushed状态，这个状态下它保存着所有的缓冲区。一旦第一个输入buffer出现了，编解码器就会自动运行到Running的状态。当带有end-of-stream标志的buffer进去后，编解码器会进入End-of-Stream状态，这种状态下编解码器不在接受输入buffer，但是仍然在产生输出的buffer。此时可以调用flush()方法，将编解码器重置于Flushed状态。
+                3、调用stop()可以将编解码器返回到Uninitialized状态，然后可以重新配置。
+                4、在底层编解码出错的情况下，MediaCodec会转到错误状态。调用reset()使编解码器再次可用，reset()可以从任何状态将编解码器移Uninitialized状态。
+                5、当MediaCodec数据处理任务完成时或不再需要MediaCodec时，可使用release()方法释放其资源，到达Released状态。
+
+                创建                ---> 未初始化状态
+                configure()         ---> Configured
+                start()             ---->Executing--Flushed
+                    第一个输入buffer 出现，Running
+                    end-of-stream标志的buffer输入，End-of-Stream (不可输入，可输出) ，调用 flush() 可切换到 Flused 状态
+                stop()              ----> Uninitialized 状态，可重新配置
+                出错                ---> Error状态，调用 reset() 再次可用（回到 Uninitialized 状态）
+                release()           ---->Release 状态

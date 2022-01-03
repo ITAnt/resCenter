@@ -1,0 +1,172 @@
+Java
+    Stream： Java 8
+        中间过程和终结
+    
+    ReentrantLock
+    DecimalFormat
+    ArrayDeque
+
+    System.identityHashCode     java根据对象在内存中的地址算出来的一个数值
+            ArrayDeque  队列，可作为栈和双链表使用
+            ProcessBuilder
+            DataOutputStream
+            ByteArrayInputStream
+            Process
+            LinkedBlockingDeque
+            ByteBuffer
+                position()
+                asReadOnlyBuffer()
+            Locale.getDefault()
+
+            try(){}catch(){}：Java 7
+                称为 ARM 块(Automatic Resource Management)，自动资源管理
+                使用 try(){}catch(){} 数据流会在 try 执行完毕后自动被关闭，前提是，这些可关闭的资源必须实现 java.lang.AutoCloseable 接口
+    
+
+    default： java 8
+            接口内部包含了一些默认的方法实现,从而使得接口在进行扩展的时候，不会破坏与接口相关的实现类代码。
+            引进默认方法的目的是为了解决接口的修改与现有的实现不兼容的问题。
+            
+            实现两个接口(定义了相同的默认方法)，此时编译器会报错，解决办法是在实现类中重新实现该方法
+            继承一个类并且实现一个接口，都实现了相同的默认方法，则执行的是类中方法(类优先于接口)
+        ByteBuffer
+            flip :
+                读写模式切换
+
+        concurrent      https://blog.csdn.net/educast/article/details/77102360
+            BlockingQueue
+                阻塞队列
+
+            ArrayBlockingQueue
+                底层以数组的形式保存数据(实际上可看作一个循环数组)。
+                四种形式的处理方式
+                        抛出异常
+                            插入    add(e)          加
+                            删除    remove(e)       
+                            检查    element()
+                        特殊值
+                            插入    offer(e)        加
+                            删除    poll()          取首位
+                            检查    peek()
+                        阻塞
+                            插入    put(e)          加
+                            删除    take()
+                            检查    不可用
+                        超时
+                            插入    offer(e, time, unit)
+                            删除    poll(time, unit)       取首位
+                            检查    不可用
+
+            BlockingDeque：同一个线程 ？？？？
+                阻塞双端队列
+                在线程既是一个队列的生产者又是这个队列的消费者的时候可以使用到 BlockingDeque。如果生产者线程需要在队列的两端都可以插入数据，消费者线程需要在队列的两端都可以移除数据，这个时候也可以使用 BlockingDeque。
+            
+            DelayQueue
+                延迟队列
+                对元素进行持有直到一个特定的延迟到期。
+                DelayQueue 将会在每个元素的 getDelay() 方法返回的值的时间段之后才释放掉该元素。
+            
+            SynchronousQueue
+                内部同时只能够容纳单个元素。如果该队列已有一元素的话，试图向队列中插入一个新元素的线程将会阻塞，直到另一个线程将该元素从队列中抽走。同样，如果该队列为空，试图向队列中抽取一个元素的线程将会阻塞，直到另一个线程向队列中插入了一条新的元素。
+            
+            
+            ReentrantLock
+                可重入锁：指同一个线程可以多次获取同一把锁
+                可中断锁：指线程尝试获取锁的过程中，是否可以响应中断。
+                默认非公平锁
+                主要利用 CAS+AQS 队列来实现。它支持公平锁和非公平锁
+                CAS：Compare and Swap，比较并交换。CAS有3个操作数：内存值V、预期值A、要修改的新值B。当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做。该操作是一个原子操作，被广泛的应用在Java的底层实现中。在Java中，CAS主要是由sun.misc.Unsafe这个类通过JNI调用CPU底层指令实现
+                
+                AQS使用一个 FIFO 的队列表示排队等待锁的线程，队列头节点称作“哨兵节点”或者“哑节点”，它不与任何线程关联。其他的节点与等待线程关联，每个节点维护一个等待状态waitStatus
+                入队采用自旋( for(;;) 直到任务执行完成 )+CAS组合来实现非阻塞的原子操作
+                ReentrantLock的基本实现可以概括为：
+                    先通过CAS尝试获取锁。如果此时已经有线程占据了锁，那就加入 AQS 队列并且被挂起。
+                    当锁被释放之后，排在 CLH 队列队首的线程会被唤醒，然后CAS再次尝试获取锁。在这个时候，如果：
+                        非公平锁：如果同时还有另一个线程进来尝试获取，那么有可能会让这个线程抢先获取；
+                        公平锁：如果同时还有另一个线程进来尝试获取，当它发现自己不是在队首的话，就会排到队尾，由队首的线程获取到锁。
+            
+
+            Semaphore
+            CountDownLatch
+            ReentrantReadWriteLock
+            FutureTask
+    
+        Supplier：  java 1.8
+            函数式接口
+            //创建了Supplier的实现对象，声明为Supplier<类型>，此时并不会调用对象的构造方法，即不会创建对象
+            Supplier<Test> suTest = Supplier::new;
+            //调用get()方法，此时会调用对象的构造方法，即获得到真正对象
+            suTest.get();
+
+            结合 lambda 使用
+                System.out.println(
+                    getString(
+                            () -> msgA + msgB
+                    )
+                );
+
+                private static String getString(Supplier<String> stringSupplier) {
+                    return stringSupplier.get();
+                }
+        
+        Lambda：Java 8
+            Lambda 允许把函数作为一个方法的参数（函数作为参数传递进方法中）
+            语法格式：
+                (parameters) -> expression
+                或
+                (parameters) ->{ statements; }
+
+            lambda表达式的重要特征:
+                可选类型声明：      不需要声明参数类型，编译器可以统一识别参数值。
+                可选的参数圆括号：  一个参数无需定义圆括号，但多个参数需要定义圆括号。
+                可选的大括号：      如果主体包含了一个语句，就不需要使用大括号。
+                可选的返回关键字：  如果主体只有一个表达式返回值则编译器会自动返回值，大括号需要指定表达式返回了一个数值。
+
+            示例：
+                //不要参数，返回值 5
+                () -> 5  
+            
+            
+            使用 Lambda 表达式需要注意以下两点：
+                1. Lambda 表达式主要用来定义行内执行的方法类型接口，例如，一个简单方法接口。
+                2. Lambda 表达式免去了使用匿名方法的麻烦，并且给予Java简单但是强大的函数化的编程能力。
+            
+            接口
+                interface MathOperation {
+                    int operation(int a, int b);
+                }
+
+                // 类型声明
+                MathOperation addition = (int a, int b) -> a + b;
+        
+                // 不用类型声明
+                MathOperation subtraction = (a, b) -> a - b;
+        
+                // 大括号中的返回语句
+                MathOperation multiplication = (int a, int b) -> { return a * b; };
+        
+                // 没有大括号及返回语句
+                MathOperation division = (int a, int b) -> a / b;
+            
+            变量作用域：
+                lambda 表达式只能引用标记了 final 的外层局部变量，这就是说不能在 lambda 内部修改定义在域外的局部变量，否则会编译错误。
+                lambda 表达式的局部变量可以不用声明为 final，但是必须不可被后面的代码修改（即隐性的具有 final 的语义）
+                
+                //未声明为 final，默认为 final
+                int num = 1;  
+                Converter<Integer, String> s = (param) -> System.out.println(String.valueOf(param + num));
+                s.convert(2);
+                num = 5;        //修改，编译报错
+
+                在 Lambda 表达式当中不允许声明一个与局部变量同名的参数或者局部变量。
+
+                String first = "";  
+                Comparator<String> comparator = (first, second) -> Integer.compare(first.length(), second.length());  //编译会出错 
+    
+
+    transient：序列化中关键字
+            将不需要序列化的属性前添加关键字transient，序列化对象的时候，这个属性就不会被序列化
+            transient的作用就是把这个字段的生命周期仅存于调用者的内存中而不会写到磁盘里持久化
+            Serializable ： 使用该关键字修饰的成员属性不会被序列化
+            Exteranlizable：使用与不使用无关，仅与程序指定那些属性是需要序列化
+            静态成员属性不会被序列化

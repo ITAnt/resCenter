@@ -1,0 +1,3 @@
+CMake 相关语法：
+
+    SET( CMAKE_VERBOSE_MAKEFILE on )    显示执行构建过程中详细的信息(比如为了得到更详细的出错信息)
